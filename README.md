@@ -1,2 +1,2 @@
 # html2karax
-auto upgrade website
+nim c -r --hints:off -w:off tut1.nim && nim js --hints:off -w:off tut.nim
