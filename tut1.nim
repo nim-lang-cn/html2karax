@@ -29,11 +29,13 @@ template to(t: string) {.dirty.} =
 
     elif body[i].kind == xnText :
       var text = body[i].innerText
+      # text = text.replace(re"\x0A\n?\s+","\x0A")
+      # if text.strip == "": continue
       if {'\n','\"','\\'} in text:
         text = text.escape
         if text.find(re"\\x0A") > 1:
           text = text.replace(re"\\x0A\s+"," ")
-        karaxHtml.add indent("\ntext " & text , incremental+2)
+        karaxHtml.add indent("\ntext t " & text , incremental+2)
       else:
         karaxHtml.add indent("\ntext t \"" & text & "\"" , incremental+2)
       
