@@ -1,7 +1,7 @@
 import htmlparser
-import xmltree  # To use '$' for XmlNode
-import strtabs  # To access XmlAttributes
-import strutils # To use cmpIgnoreCase
+import xmltree except escape
+import strtabs  
+import strutils 
 import strformat
 import re
 var karaxHtml = ""
@@ -20,6 +20,7 @@ template to(t: string) {.dirty.} =
       attr.add &"{name}=\"{value}\""
   var suffix = if body.len != 0 :"):" else: ")"
   karaxHtml.add attr.join(",") & suffix
+
   for i in 0..body.len-1:
     if body[i].kind == xnElement and body[i].len != 0:
       incremental.inc(2)
@@ -27,13 +28,13 @@ template to(t: string) {.dirty.} =
       incremental = localIndent
 
     elif body[i].kind == xnText :
-      var text = body[i].text.replace(re"\n\s{14}","\n")
-      if text == "\"":
-        karaxHtml.add indent("\ntext t \"" & text.replace("\"","\\\"") & "\"" , incremental+2)
+      var text = body[i].innerText
+      if {'\n','\"','\\'} in text:
+        text = text.escape.replace(re"\\x0A\s{3,}","\\n")
+        karaxHtml.add indent("\ntext t " & text , incremental+2)
       else:
-        karaxHtml.add indent("\ntext t \"\"\"" & text & "\"\"\"" , incremental+2)
-    
-  
+        karaxHtml.add indent("\ntext t \"" & text & "\"" , incremental+2)
+      
 
 proc getXmlNode(body:XmlNode) = 
   case body.tag
