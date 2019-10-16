@@ -350,11 +350,7 @@ proc createDom():VNode =
               text t "\x0A              "              
               p():                
                 text t "\x0A                "                
-                text t "\"Der Mensch ist doch ein Augentier -- sch"                
-                text t "&ouml"                
-                text t "ne Dinge w"                
-                text t "&uuml"                
-                text t "nsch ich mir.\" "              
+                text t "\"Der Mensch ist doch ein Augentier -- sch&oumlne Dinge w&uumlnsch ich mir.\""              
               text t "\x0A            "            
             text t "\x0A            "          
           p():            
