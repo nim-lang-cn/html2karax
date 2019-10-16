@@ -11,7 +11,6 @@ let html = loadHtml("tut1.html")
 var body = html.findAll("body")[0][1]
 
 var incremental: int = 2
-
 template to(t: string) {.dirty.} = 
   var localIndent = incremental
   karaxHtml.add indent("\n" &  t &  "(", localIndent)
@@ -28,8 +27,12 @@ template to(t: string) {.dirty.} =
       incremental = localIndent
 
     elif body[i].kind == xnText :
-      var stripped = body[i].rawText
-      karaxHtml.add indent("\ntext t\"\"\"" & stripped & "\"\"\"" , incremental+2)
+      var text = body[i].text.replace(re"\n\s{14}","\n")
+      if text == "\"":
+        karaxHtml.add indent("\ntext t \"" & text.replace("\"","\\\"") & "\"" , incremental+2)
+      else:
+        karaxHtml.add indent("\ntext t \"\"\"" & text & "\"\"\"" , incremental+2)
+    
   
 
 proc getXmlNode(body:XmlNode) = 
@@ -168,7 +171,7 @@ import translations
 
 proc createDom():VNode = 
   buildHtml {karaxHtml.strip()}
-    tdiv(style="position:absolute;right:0;top:10%;"):
+    tdiv(style="position:absolute;right:0;top:5%;"):
       a(onclick = zhCN):span: text "Chinese |"
       a(onclick = enUS):span: text " English"  
   

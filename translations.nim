@@ -1,5 +1,11 @@
 import karax / [kdom, jstrutils, kajax, vdom, jjson, karaxdsl,karax, vstyles,i18n, languages,kbase]
 
+proc textContent*(e: Element): cstring {.
+  importcpp: "#.textContent", nodecl.}
+
+proc textContent*(e: Node): cstring {.
+  importcpp: "#.textContent", nodecl.}
+
 proc zhCN*(e:Event,n:VNode) =
     setCurrentLanguage(Language.zhCN)
 
