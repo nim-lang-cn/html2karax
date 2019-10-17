@@ -181,7 +181,7 @@ import translations
 
 proc createDom():VNode = 
   buildHtml {karaxHtml.strip()}
-    tdiv(style="position:absolute;right:0;top:5%;"):
+    tdiv(style="position:fixed;right:0;top:5%;"):
       a(onclick = zhCN):span: text "Chinese |"
       a(onclick = enUS):span: text " English"  
   
