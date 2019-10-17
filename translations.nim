@@ -106,8 +106,24 @@ dict = @[
   ("some checks are ","一些检查"),
   ("turned off and optimizations are turned on","被关闭并启用优化"),
   ("Though it should be pretty obvious what the program does, I will explain the syntax: statements which are not indented are executed when the program starts. Indentation is Nim\'s way of grouping statements. Indentation is done with spaces only, tabulators are not allowed.",
-  "程序一目了然，解释下语法：没有缩进的语句在程序开始时执行。缩进是Nim划分语句的方式。缩进只能使用空格，不允许制表符。"),
-
+  "程序一目了然：没有缩进的语句在程序开始时执行。缩进是Nim划分语句的方式。缩进只能使用空格，不允许制表符。"),
+  ("String literals are enclosed in double quotes. The ","字符串字面值用双引号包围。"),
+  ("statement declares a new variable named ","语句声明一个新的变量，名叫"),
+  ("of type ","，属于"),
+  ("string","字符串"),
+  ("with the value that is returned by the ","，值为被"),
+  ("procedure. Since the compiler knows that ","过程返回的值。因为编译器知道"),
+  ("returns a string, you can leave out the type in the declaration (this is called ","返回字符串，可以在声明中不写类型（这叫做"),
+  ("local type inference","局部类型推导"),
+  ("). So this will work too:","）。所以这也可以："),
+  ("Note that this is basically the only form of type inference that exists in Nim: it is a good compromise between brevity and readability.",
+  "这基本是Nim中存在的唯一形式的类型推导：兼顾简洁和可读。"),
+  ("The \"hello world\" program contains several identifiers that are already known to the compiler: ",
+  "\"hello world\"程序包含几个编译器已知的标识符："),
+  (", etc. These built-ins are declared in the ","等。这些内置类型声明在"),
+  ("module which is implicitly imported by any other module.","模块，其通过任意其它模块隐式导入。"),
+  ("Let us look at Nim\'s lexical elements in more detail: like other programming languages Nim consists of (string) literals, identifiers, keywords, comments, operators, and other punctuation marks.",
+  "我们来看下Nim的词法元素的更多细节：和其它编程语言一样，Nim由（字符串）字面值、标识符、关键字、注释、运算符和其它标点符号构成。")
 ]
 
 for i in dict:
