@@ -22,13 +22,17 @@ template to(t: string) {.dirty.} =
   karaxHtml.add attr.join(",") & suffix
 
   for i in 0..body.len-1:
-    if body[i].kind == xnElement and body[i].len != 0:
-      incremental.inc(2)
-      getXmlNode body[i]
-      incremental = localIndent
+    if body[i].kind == xnElement:
+      if body[i].tag == "p" and body[i].len > 3:
+        karaxHtml.add indent("\ntext t \"\"\"" & body[i].innerText & "\"\"\"" , incremental+2)
+      elif body[i].len != 0:
+        incremental.inc(2)
+        getXmlNode body[i]
+        incremental = localIndent
 
     elif body[i].kind == xnText :
       var text = body[i].innerText
+      echo text
       # text = text.replace(re"\x0A\n?\s+","\x0A")
       # if text.strip == "": continue
       if {'\n','\"','\\'} in text:
