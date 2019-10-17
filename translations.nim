@@ -81,8 +81,9 @@ addTranslation(Language.zhCN, "Include statement", "Include语句")
 addTranslation(Language.zhCN, "Part 2", "第二部分")
 addTranslation(Language.zhCN, "Author:", "作者：")
 addTranslation(Language.zhCN, "Version:", "版本：")
-addTranslation(Language.zhCN, "\"Der Mensch ist doch ein Augentier -- sch&oumlne Dinge w&uumlnsch ich mir.\"", "人是视觉动物——我渴望美好事物。")
-addTranslation(Language.zhCN, "This document is a tutorial for the programming language ","")
+addTranslation(Language.zhCN, "\"Der Mensch ist doch ein Augentier -- sch\xC3\xB6ne Dinge w\xC3\xBCnsch ich mir.\" ", "人是视觉动物——我渴望美好事物。")
+addTranslation(Language.zhCN, "This document is a tutorial for the programming language ","本文档是关于Nim编程语言的教程")
+addTranslation(Language.zhCN, "contains many more examples of the advanced language features. All code examples in this tutorial, as well as the ones found in the rest of Nim\'s documentation, follow the ","本文档是关于Nim编程语言的教程")
 
 
 

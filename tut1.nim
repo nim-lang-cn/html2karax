@@ -4,11 +4,17 @@ import strtabs
 import strutils 
 import strformat
 import re
+import unicode except strip
+import sequtils
+
 var karaxHtml = ""
 
-let html = loadHtml("tut1.html")
+var tut1 = readFile("tut1.html")
 
+var entity = tut1.findAll(re"&(\w+);")
+var html = parseHtml(tut1.multiReplace(entity.zip(entity.mapIt(entityToRune(it.substr(1,it.len-2)).toUTF8))))
 var body = html.findAll("body")[0][1]
+
 
 var incremental: int = 2
 template to(t: string) {.dirty.} = 
@@ -22,17 +28,12 @@ template to(t: string) {.dirty.} =
   karaxHtml.add attr.join(",") & suffix
 
   for i in 0..body.len-1:
-    if body[i].kind == xnElement:
-      if body[i].tag == "p" and body[i].len > 3:
-        karaxHtml.add indent("\ntext t \"\"\"" & body[i].innerText & "\"\"\"" , incremental+2)
-      elif body[i].len != 0:
+    if body[i].kind == xnElement and body[i].len != 0:
         incremental.inc(2)
         getXmlNode body[i]
         incremental = localIndent
-
     elif body[i].kind == xnText :
       var text = body[i].innerText
-      echo text
       # text = text.replace(re"\x0A\n?\s+","\x0A")
       # if text.strip == "": continue
       if {'\n','\"','\\'} in text:
