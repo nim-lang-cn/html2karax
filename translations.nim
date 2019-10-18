@@ -123,7 +123,12 @@ dict = @[
   (", etc. These built-ins are declared in the ","等。这些内置类型声明在"),
   ("module which is implicitly imported by any other module.","模块，其通过任意其它模块隐式导入。"),
   ("Let us look at Nim\'s lexical elements in more detail: like other programming languages Nim consists of (string) literals, identifiers, keywords, comments, operators, and other punctuation marks.",
-  "我们来看下Nim的词法元素的更多细节：和其它编程语言一样，Nim由（字符串）字面值、标识符、关键字、注释、运算符和其它标点符号构成。")
+  "我们来看下Nim的词法元素的更多细节：和其它编程语言一样，Nim由（字符串）字面值、标识符、关键字、注释、运算符和其它标点符号构成。"),
+  ("String literals are enclosed in double quotes; character literals in single quotes. Special characters are escaped with ",
+  "字符串字面值由双引号包围；字符字面值用单引号。特殊字转义使用"),
+  ("means newline, ","意为换行"),
+
+
 ]
 
 for i in dict:
