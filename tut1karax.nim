@@ -425,7 +425,6 @@ proc createDom():VNode =
           p():            
             text t "Save this code to the file \"greetings.nim\". Now compile and run it: "            
             pre():              
-              text t "\x0A"              
               text t "nim compile --run greetings.nim"            
             text t "\x0A            "          
           text t "\x0A            "          
@@ -440,21 +439,18 @@ proc createDom():VNode =
             text t " "            
             text t "Nim executes the file automatically after compilation. You can give your program command line arguments by appending them after the filename: "            
             pre():              
-              text t "\x0A"              
               text t "nim compile --run greetings.nim arg1 arg2"            
             text t "\x0A            "          
           text t "\x0A            "          
           p():            
             text t "Commonly used commands and switches have abbreviations, so you can also use: "            
             pre():              
-              text t "\x0A"              
               text t "nim c -r greetings.nim"            
             text t "\x0A            "          
           text t "\x0A            "          
           p():            
             text t "To compile a release version use: "            
             pre():              
-              text t "\x0A"              
               text t "nim c -d:release greetings.nim"            
             text t "\x0A            "          
           text t "\x0A            "          
