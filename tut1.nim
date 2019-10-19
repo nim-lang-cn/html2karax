@@ -12,12 +12,15 @@ var karaxHtml = ""
 var tut1 = readFile("tut1.html")
 
 var entity = tut1.findAll(re"&(\w+);")
-var html = parseHtml(tut1.multiReplace(entity.zip(entity.mapIt(entityToRune(it.substr(1,it.len-2)).toUTF8))))
+tut1 = tut1.multiReplace(entity.zip(entity.mapIt(entityToRune(it.substr(1,it.len-2)).toUTF8)))
+
+var html = parseHtml tut1
 var body = html.findAll("body")[0][1]
 
 
 var incremental: int = 2
 template to(t: string) {.dirty.} = 
+  if t == "pre" and body[0].kind == xnText and body[0].text == "\n": body.delete 0
   var localIndent = incremental
   karaxHtml.add indent("\n" &  t &  "(", localIndent)
   var attr: seq[string]
@@ -34,9 +37,8 @@ template to(t: string) {.dirty.} =
         incremental = localIndent
     elif body[i].kind == xnText :
       var text = body[i].innerText
-      # text = text.replace(re"\x0A\n?\s+","\x0A")
-      # if text.strip == "": continue
       if {'\n','\"','\\'} in text:
+        # if text == "\n": continue
         text = text.escape
         if text.find(re"\\x0A") > 1:
           text = text.replace(re"\\x0A\s+"," ")
@@ -45,7 +47,7 @@ template to(t: string) {.dirty.} =
         karaxHtml.add indent("\ntext t \"" & text & "\"" , incremental+2)
       
 
-proc getXmlNode(body:XmlNode) = 
+proc getXmlNode(body: var XmlNode) = 
   case body.tag
   of "a": to "a"
   of "abbr": to "abbr"
