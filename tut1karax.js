@@ -40292,7 +40292,7 @@ function create_dom_292014() {
 		F.line = 10395;
 		var tmp_296149 = tree_246045(43, []);
 		F.line = 10395;
-		tmp_296149.style = style_240305("position:fixed;right:0;top:5%;font-size:50%;");
+		tmp_296149.style = style_240305("position:fixed;right:0;top:5%;");
 		F.line = 10396;
 		var tmp_296150 = tree_246045(44, []);
 		F.line = 10396;
