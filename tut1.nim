@@ -6,10 +6,23 @@ import strformat
 import re
 import unicode except strip
 import sequtils
+import parseopt
+
+var file: string
+var p = parseopt.initOptParser()
+
+while true:
+  parseopt.next(p)
+  case p.kind
+  of cmdEnd: break
+  of cmdLongOption, cmdShortOption:
+    echo p.key
+  of cmdArgument:
+    file = p.key
 
 var karaxHtml = ""
 
-var tut1 = readFile("tut1.html")
+var tut1 = readFile(file & ".html")
 
 var entity = tut1.findAll(re"&(\w+);")
 tut1 = tut1.multiReplace(entity.zip(entity.mapIt(entityToRune(it.substr(1,it.len-2)).toUTF8)))
@@ -188,6 +201,6 @@ proc createDom():VNode =
       a(onclick = enUS):span: text " English"  
   
 setRenderer createDom"""
-
-writeFile("tut1karax.nim",karaxTemplate)
+var outfile = file & "karax.nim"
+writeFile(outfile,karaxTemplate)
 

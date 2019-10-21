@@ -10392,7 +10392,7 @@ proc createDom():VNode =
         text t "\x0A      "      
       text t "\x0A    "    
     text t "\x0A  "
-    tdiv(style="position:fixed;right:0;top:5%;"):
+    tdiv(style="position:fixed;right:0;top:5%;font-size:50%;"):
       a(onclick = zhCN):span: text "Chinese |"
       a(onclick = enUS):span: text " English"  
   
