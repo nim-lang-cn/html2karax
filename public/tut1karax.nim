@@ -1,4 +1,5 @@
 import karax/[karaxdsl,vdom, karax, vstyles]
+import dom
 import translations
 
 proc createDom():VNode = 
@@ -532,7 +533,17 @@ proc createDom():VNode =
               text t "system"            
             text t " "            
             text t "module which is implicitly imported by any other module."          
-          text t "\x0A\x0A            "          
+          text t "\x0A\x0A            "
+          text t"attachment:"
+          span(onclick = proc() = 
+              var display = getElementById("1").style.getPropertyValue("display")
+              kout display
+              if display == "none":
+                getElementById("1").style.setProperty("display","block")
+              else:
+                getElementById("1").style.setProperty("display","none")
+            ): text "1.mp4"     
+          video(id="1",src="http://120.77.248.64:8003/1.mp4",controls="controls",width="100%",height="100%",style="display:none;")     
           h1():            
             a(class="toc-backref",id="lexical-elements",href="#lexical-elements"):              
               text t "Lexical elements"          

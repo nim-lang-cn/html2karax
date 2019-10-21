@@ -17,6 +17,7 @@ proc t*(text: kstring): cstring =
 
 var dict: seq[(string,string)]
 dict = @[
+  ("attachment:","附："),
   ("Nim Tutorial (Part I)", "Nim中文教程（第一部分）"),
   ("Manual", "手册"),
   ("Index", "索引"),
