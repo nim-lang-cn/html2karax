@@ -337,7 +337,7 @@ proc createDom():VNode =
                   text t "\x0A                  "                  
                   td():                    
                     text t " "                    
-                    text t "|nimversion|"                  
+                    text t "1.0.0 "                  
                   text t "\x0A                "                
                 text t "\x0A              "              
               text t "\x0A            "            

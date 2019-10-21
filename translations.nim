@@ -140,7 +140,7 @@ dict = @[
   ("## a documentation comment","## 文档注释"),
   ("Documentation comments are tokens; they are only allowed at certain places in the input file as they belong to the syntax tree! This feature enables simpler documentation generators.",
   "文档注释是符号，属于语法树，只允许出现在输入文件中的特定位置。这允许更简单的文档生成器。"),
-  ("Multiline comments are started with ","多选注释用"),
+  ("Multiline comments are started with ","多行注释用"),
   ("and terminated with ","结束用"),
   (". Multiline comments can also be nested.","。多行注释可以嵌套。"),
   ("#[\x0AYou can have any Nim code text commented\x0Aout inside this with no indentation restrictions. yes(\"May I ask a pointless question?\") #[ Note: these can be nested!! ]#\x0A]#",

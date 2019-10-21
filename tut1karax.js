@@ -4852,7 +4852,7 @@ function create_dom_292014() {
 		F.line = 339;
 		add_244786(tmp_292213, text_246201(t_291056(" ")));
 		F.line = 340;
-		add_244786(tmp_292213, text_246201(t_291056("|nimversion|")));
+		add_244786(tmp_292213, text_246201(t_291056("1.0.0 ")));
 		F.line = 340;
 		add_244786(tmp_292211, tmp_292213);
 		F.line = 341;
