@@ -15,6 +15,6 @@ nim c -r html2karax.nim manual
 把manual.html转换成manualkarax.nim
 
 nim js tut1karax.nim
-把tut1karax.nim编译成js
+把tut1karax.nim编译成js，以此类推。
 
 通过浏览器访问index.html
