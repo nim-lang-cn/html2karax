@@ -1,7 +1,8 @@
 # html2karax
-convert static html to Karax single page application or server sider rendering.
+Convert static html to Karax single page application or server sider rendering.Use https://github.com/gogolxdong/karax
 
-把静态html转换为Karax单面应用或服务端渲染
+把静态html转换为Karax单面应用或服务端渲染，使用https://github.com/gogolxdong/karax
+
 
 ## Usage
 nim c -r html2karax.nim tut1
