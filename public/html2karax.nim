@@ -1,6 +1,15 @@
 import std / [htmlparser, parseopt, strtabs, strutils, os, xmltree]
 
 const
+  Usage = """html2karax - Convert static html to Karax DSL code.
+
+Usage:
+  html2karax [options] htmlfile
+Options:
+  --out:file    set the output file (default: the same name as the input file, .nim extension)
+  --help        show this help
+"""
+
   karaxTemplate = """
 include karax / prelude
 
@@ -10,7 +19,6 @@ proc createDom(): VNode =
 setRenderer createDom
 """
 
-const
   nimKeyw = ["addr", "and", "as", "asm",
     "bind", "block", "break",
     "case", "cast", "concept", "const", "continue", "converter",
@@ -51,19 +59,17 @@ proc toVNode(tag: string): string =
   else:
     result = tag
 
-proc addIndent(result: var string, indent: int, addNewLines: bool) =
-  if addNewLines:
-    result.add("\n")
+proc addIndent(result: var string, indent: int) =
+  result.add("\n")
   for i in 1 .. indent:
     result.add(' ')
 
-proc renderImpl*(result: var string, n: XmlNode, indent = 0, indWidth = 2,
-          addNewLines = true) =
+proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
   if n != nil:
     case n.kind
     of xnElement:
       if indent > 0:
-        result.addIndent(indent, addNewLines)
+        result.addIndent(indent)
       result.add(toVNode(n.tag))
       result.add('(')
       if n.attrs != nil:
@@ -85,26 +91,19 @@ proc renderImpl*(result: var string, n: XmlNode, indent = 0, indWidth = 2,
       else:
         result.add("):")
         for i in 0 ..< n.len:
-          result.renderImpl(n[i], indent+indWidth, indWidth, addNewLines)
+          result.renderImpl(n[i], indent+indWidth, indWidth)
     of xnText:
       let text = n.text.strip
       if text.len > 0:
         if indent > 0:
-          result.addIndent(indent, addNewLines)
+          result.addIndent(indent)
         result.add("text \"")
         result.add(text)
         result.add('"')
     else: discard
 
-const
-  Usage = """html2karax - Convert static html to Karax DSL code.
-
-Usage:
-  html2karax [options] htmlfile
-Options:
-  --out:file    set the output file (default: same name as the input file)
-  --help        show this help
-"""
+proc render(n: XmlNode, indent = 0, indWidth = 2): string =
+  renderImpl(result, n, indent, indWidth)
 
 proc writeHelp() =
   stdout.write(Usage)
@@ -131,9 +130,7 @@ proc main =
     outfile = infile.changeFileExt("nim")
 
   let parsed = loadHtml(infile)
-  var result = ""
-  renderImpl(result, parsed[0], 4)
-
-  writeFile(outfile, karaxTemplate.format(result))
+  let result = render(parsed[0], 4)
+  writeFile(outfile, karaxTemplate % result)
 
 main()
