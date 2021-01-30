@@ -1,7 +1,7 @@
-import std / [htmlparser, parseopt, strtabs, strutils, os, xmltree]
+import std / [algorithm, htmlparser, parseopt, strtabs, strutils, os, xmltree]
 
 const
-  Usage = """html2karax - Convert static html to Karax DSL code.
+  usage = """html2karax - Convert static html to Karax DSL code.
 
 Usage:
   html2karax [options] htmlfile
@@ -10,7 +10,7 @@ Options:
   --help        show this help
 """
 
-  karaxTemplate = """
+  karaxTmpl = """
 include karax / prelude
 
 proc createDom(): VNode =
@@ -77,7 +77,7 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
         for key, val in pairs(n.attrs):
           if comma: result.add(", ")
           else: comma = true
-          let isKeyw = key in nimKeyw
+          let isKeyw = binarySearch(nimKeyw, key) >= 0
           if isKeyw:
             result.add('`')
           result.add(key)
@@ -91,7 +91,7 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
       else:
         result.add("):")
         for i in 0 ..< n.len:
-          result.renderImpl(n[i], indent+indWidth, indWidth)
+          renderImpl(result, n[i], indent+indWidth, indWidth)
     of xnText:
       let text = n.text.strip
       if text.len > 0:
@@ -103,10 +103,11 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
     else: discard
 
 proc render(n: XmlNode, indent = 0, indWidth = 2): string =
+  result = ""
   renderImpl(result, n, indent, indWidth)
 
 proc writeHelp() =
-  stdout.write(Usage)
+  stdout.write(usage)
   stdout.flushFile()
   quit(0)
 
@@ -127,10 +128,10 @@ proc main =
     quit "[Error] no input file."
 
   if outfile.len == 0:
-    outfile = infile.changeFileExt("nim")
+    outfile = infile.changeFileExt(".nim")
 
   let parsed = loadHtml(infile)
   let result = render(parsed[0], 4)
-  writeFile(outfile, karaxTemplate % result)
+  writeFile(outfile, karaxTmpl % result)
 
 main()
