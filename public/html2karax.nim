@@ -71,8 +71,8 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
       if indent > 0:
         result.addIndent(indent)
       result.add(toVNode(n.tag))
-      result.add('(')
       if n.attrs != nil:
+        result.add('(')
         var comma = false
         for key, val in pairs(n.attrs):
           if comma: result.add(", ")
@@ -86,19 +86,17 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
           result.add(" = \"")
           result.add(val)
           result.add('"')
-      if n.len == 0:
         result.add(')')
-      else:
-        result.add("):")
+      if n.len != 0:
+        result.add(':')
         for i in 0 ..< n.len:
           renderImpl(result, n[i], indent+indWidth, indWidth)
     of xnText:
-      let text = n.text.strip
-      if text.len > 0:
+      if n.text.isEmptyOrWhitespace:
         if indent > 0:
           result.addIndent(indent)
         result.add("text \"")
-        result.add(text)
+        result.add(n.text)
         result.add('"')
     else: discard
 
