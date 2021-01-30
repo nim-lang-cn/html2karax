@@ -113,6 +113,7 @@ proc writeHelp() =
 
 proc main =
   var infile, outfile: string
+  let indWidth = 2
   for kind, key, val in getopt():
     case kind
     of cmdArgument:
@@ -131,7 +132,7 @@ proc main =
     outfile = infile.changeFileExt(".nim")
 
   let parsed = loadHtml(infile)
-  let result = render(parsed[0], 4)
+  let result = render(parsed, 2*indWidth, indWidth)
   writeFile(outfile, karaxTmpl % result)
 
 main()
