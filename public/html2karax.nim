@@ -92,7 +92,7 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
         for i in 0 ..< n.len:
           renderImpl(result, n[i], indent+indWidth, indWidth)
     of xnText:
-      if n.text.isEmptyOrWhitespace:
+      if not isEmptyOrWhitespace(n.text):
         if indent > 0:
           result.addIndent(indent)
         result.add("text \"")
