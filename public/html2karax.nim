@@ -1,4 +1,5 @@
 import std / [algorithm, htmlparser, parseopt, strtabs, strutils, os, xmltree]
+from json import escapeJsonUnquoted
 
 const
   usage = """html2karax - Convert static html to Karax DSL code.
@@ -96,7 +97,7 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
         if indent > 0:
           result.addIndent(indent)
         result.add("text \"")
-        result.add(n.text)
+        result.add(escapeJsonUnquoted(n.text))
         result.add('"')
     else: discard
 
