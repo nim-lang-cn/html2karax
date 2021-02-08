@@ -1,7 +1,8 @@
-import std / [algorithm, htmlparser, parseopt, strtabs, strutils, os, xmltree]
-from std/json import escapeJsonUnquoted
+import std / [algorithm, htmlparser, parseopt, strtabs, strutils, os, xmltree, wordwrap]
+from std / json import escapeJsonUnquoted
 
 const
+  maxLineWidth = 80
   usage = """html2karax - Convert static html to Karax DSL code.
 
 Usage:
@@ -41,7 +42,7 @@ setRenderer createDom
     "xor",
     "yield"]
 
-proc toVNode(tag: string): string =
+proc toVNode(tag: sink string): string =
   case tag
   of "div":
     result = "tdiv"
@@ -57,6 +58,12 @@ proc toVNode(tag: string): string =
     result = "underlined"
   of "object":
     result = "`object`"
+  of "discard":
+    result = "`discard`"
+  of "set":
+    result = "`set`"
+  of "text":
+    result = "stext"
   else:
     result = tag
 
@@ -96,9 +103,15 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
       if not isEmptyOrWhitespace(n.text):
         if indent > 0:
           result.addIndent(indent)
-        result.add("text \"")
-        result.add(escapeJsonUnquoted(n.text))
-        result.add('"')
+        if indent + len(n.text) + len("text \"\"") <= maxLineWidth:
+          result.add("text \"")
+          result.add(escapeJsonUnquoted(n.text))
+          result.add('"')
+        else:
+          result.add("text \"\"\"\n")
+          let wrapped = wrapWords(n.text, maxLineWidth-indent, false)
+          result.add(indent(wrapped, indent+indWidth))
+          result.add("\"\"\"")
     else: discard
 
 proc render(n: XmlNode, indent = 0, indWidth = 2): string =
