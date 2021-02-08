@@ -2,7 +2,6 @@ import std / [algorithm, htmlparser, parseopt, strtabs, strutils, os, xmltree, w
 from std / json import escapeJsonUnquoted
 
 const
-  maxLineWidth = 80
   usage = """html2karax - Convert static html to Karax DSL code.
 
 Usage:
@@ -10,6 +9,8 @@ Usage:
 Options:
   --out:file    set the output file (default: the same name as the input file, .nim extension)
   --help        show this help
+  --indent:N[=2]        set the number of spaces that is used for indentation
+  --maxLineLen:N        set the desired maximum line length (default: 80)
 """
 
   karaxTmpl = """
@@ -42,6 +43,11 @@ setRenderer createDom
     "xor",
     "yield"]
 
+type
+  Options* = object
+    indWidth*: Natural
+    maxLineLen*: Positive
+
 proc toVNode(tag: sink string): string =
   case tag
   of "div":
@@ -72,7 +78,7 @@ proc addIndent(result: var string, indent: int) =
   for i in 1 .. indent:
     result.add(' ')
 
-proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
+proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
@@ -98,25 +104,27 @@ proc renderImpl(result: var string, n: XmlNode, indent, indWidth: int) =
       if n.len != 0:
         result.add(':')
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], indent+indWidth, indWidth)
+          renderImpl(result, n[i], indent+opt.indWidth, opt)
     of xnText:
       if not isEmptyOrWhitespace(n.text):
         if indent > 0:
           result.addIndent(indent)
-        if indent + len(n.text) + len("text \"\"") <= maxLineWidth:
-          result.add("text \"")
+        result.add("text ")
+        if indent + len("text \"\"") + len(n.text) <= opt.maxLineLen:
+          result.add('"')
           result.add(escapeJsonUnquoted(n.text))
           result.add('"')
         else:
-          result.add("text \"\"\"\n")
-          let wrapped = wrapWords(n.text, maxLineWidth-indent, false)
-          result.add(indent(wrapped, indent+indWidth))
+          result.add("\"\"\"\n")
+          let localIndent = indent+opt.indWidth
+          let wrapped = wrapWords(n.text, opt.maxLineLen-localIndent, false)
+          result.add(indent(wrapped, localIndent))
           result.add("\"\"\"")
     else: discard
 
-proc render(n: XmlNode, indent = 0, indWidth = 2): string =
+proc render(n: XmlNode, indent = 0, opt: Options): string =
   result = ""
-  renderImpl(result, n, indent, indWidth)
+  renderImpl(result, n, indent, opt)
 
 proc writeHelp() =
   stdout.write(usage)
@@ -125,7 +133,7 @@ proc writeHelp() =
 
 proc main =
   var infile, outfile: string
-  let indWidth = 2
+  var opt = Options(indWidth: 2, maxLineLen: 80)
   for kind, key, val in getopt():
     case kind
     of cmdArgument:
@@ -134,6 +142,8 @@ proc main =
       case normalize(key)
       of "help", "h": writeHelp()
       of "output", "o", "out": outfile = val
+      of "indent": opt.indWidth = parseInt(val)
+      of "maxlinelen": opt.maxLineLen = parseInt(val)
       else: writeHelp()
     of cmdEnd: assert(false) # cannot happen
 
@@ -144,7 +154,7 @@ proc main =
     outfile = infile.changeFileExt(".nim")
 
   let parsed = loadHtml(infile)
-  let result = render(parsed, 2*indWidth, indWidth)
+  let result = render(parsed, 2*opt.indWidth, opt)
   writeFile(outfile, karaxTmpl % result)
 
 main()
