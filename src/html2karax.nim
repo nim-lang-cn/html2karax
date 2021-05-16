@@ -2,7 +2,8 @@ import std / [algorithm, htmlparser, parseopt, strtabs, strutils, os, xmltree, w
 from std / json import escapeJsonUnquoted
 
 const
-  usage = """html2karax - Convert static html to Karax DSL code.
+  usage = """
+html2karax - Convert static html to Karax DSL code.
 
 Usage:
   html2karax [options] htmlfile
@@ -44,9 +45,9 @@ setRenderer createDom
     "yield"]
 
 type
-  Options* = object
-    indWidth*: Natural
-    maxLineLen*: Positive
+  Options = object
+    indWidth: Natural
+    maxLineLen: Positive
 
 proc toVNode(tag: sink string): string =
   case tag
@@ -82,29 +83,31 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
-      if indent > 0:
-        result.addIndent(indent)
-      result.add(toVNode(n.tag))
-      if n.attrs != nil:
-        result.add('(')
-        var comma = false
-        for key, val in pairs(n.attrs):
-          if comma: result.add(", ")
-          else: comma = true
-          let isKeyw = binarySearch(nimKeyw, key) >= 0
-          if isKeyw:
-            result.add('`')
-          result.add(key)
-          if isKeyw:
-            result.add('`')
-          result.add(" = \"")
-          result.add(val)
-          result.add('"')
-        result.add(')')
+      let isTopLevel = n.tag == "document"
+      if not isTopLevel:
+        if indent > 0:
+          result.addIndent(indent)
+        result.add(toVNode(n.tag))
+        if n.attrs != nil:
+          result.add('(')
+          var comma = false
+          for key, val in pairs(n.attrs):
+            if comma: result.add(", ")
+            else: comma = true
+            let isKeyw = binarySearch(nimKeyw, key) >= 0
+            if isKeyw:
+              result.add('`')
+            result.add(key)
+            if isKeyw:
+              result.add('`')
+            result.add(" = \"")
+            result.add(val)
+            result.add('"')
+          result.add(')')
       if n.len != 0:
-        result.add(':')
+        if not isTopLevel: result.add(':')
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], indent+opt.indWidth, opt)
+          renderImpl(result, n[i], if isTopLevel: indent else: indent+opt.indWidth, opt)
     of xnText:
       if not isEmptyOrWhitespace(n.text):
         if indent > 0:
@@ -112,7 +115,7 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
         result.add("text ")
         if indent + len("text \"\"") + len(n.text) <= opt.maxLineLen:
           result.add('"')
-          result.add(escapeJsonUnquoted(n.text))
+          escapeJsonUnquoted(n.text, result)
           result.add('"')
         else:
           result.add("\"\"\"\n")
