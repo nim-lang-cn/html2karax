@@ -83,29 +83,31 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
-      if indent > 0:
-        result.addIndent(indent)
-      result.add(toVNode(n.rawTag))
-      if n.attrs != nil:
-        result.add('(')
-        var comma = false
-        for key, val in pairs(n.attrs):
-          if comma: result.add(", ")
-          else: comma = true
-          let isKeyw = binarySearch(nimKeyw, key) >= 0
-          if isKeyw:
-            result.add('`')
-          result.add(key)
-          if isKeyw:
-            result.add('`')
-          result.add(" = \"")
-          result.add(val)
-          result.add('"')
-        result.add(')')
+      let isTopLevel = n.tag == "document"
+      if not isTopLevel:
+        if indent > 0:
+          result.addIndent(indent)
+        result.add(toVNode(n.rawTag))
+        if n.attrs != nil:
+          result.add('(')
+          var comma = false
+          for key, val in pairs(n.attrs):
+            if comma: result.add(", ")
+            else: comma = true
+            let isKeyw = binarySearch(nimKeyw, key) >= 0
+            if isKeyw:
+              result.add('`')
+            result.add(key)
+            if isKeyw:
+              result.add('`')
+            result.add(" = \"")
+            result.add(val)
+            result.add('"')
+          result.add(')')
       if n.len != 0:
-        result.add(':')
+        if not isTopLevel: result.add(':')
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], indent+opt.indWidth, opt)
+          renderImpl(result, n[i], if isTopLevel: indent else: indent+opt.indWidth, opt)
     of xnText:
       if not isEmptyOrWhitespace(n.text):
         if indent > 0:
