@@ -8,10 +8,10 @@ html2karax - Convert static html to Karax DSL code.
 Usage:
   html2karax [options] htmlfile
 Options:
-  --out:file    set the output file (default: the same name as the input file, .nim extension)
-  --help        show this help
-  --indent:N[=2]        set the number of spaces that is used for indentation
-  --maxLineLen:N        set the desired maximum line length (default: 80)
+  --out:file       set the output file (default: the same name as the input file, .nim extension)
+  --help           show this help
+  --indent:N[=2]   set the number of spaces that is used for indentation
+  --maxLineLen:N   set the desired maximum line length (default: 80)
 """
 
   karaxTmpl = """
@@ -85,7 +85,7 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
     of xnElement:
       if indent > 0:
         result.addIndent(indent)
-      result.add(toVNode(n.tag))
+      result.add(toVNode(n.rawTag))
       if n.attrs != nil:
         result.add('(')
         var comma = false
