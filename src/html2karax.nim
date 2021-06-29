@@ -10,6 +10,7 @@ Usage:
 Options:
   --out:file       set the output file (default: the same name as the input file, .nim extension)
   --help           show this help
+  --ssr            output code appropriate for server side HTML rendering
   --indent:N[=2]   set the number of spaces that is used for indentation
   --maxLineLen:N   set the desired maximum line length (default: 80)
 """
@@ -21,6 +22,14 @@ proc createDom(): VNode =
   result = buildHtml:$1
 
 setRenderer createDom
+"""
+
+  karaxSsrTmpl = """
+import karax / [karaxdsl, vdom]
+
+proc render(): string =
+  let vnode = buildHtml:$1
+  result = $$vnode
 """
 
   nimKeyw = ["addr", "and", "as", "asm",
@@ -136,6 +145,7 @@ proc writeHelp() =
 
 proc main =
   var infile, outfile: string
+  var ssr: bool
   var opt = Options(indWidth: 2, maxLineLen: 80)
   for kind, key, val in getopt():
     case kind
@@ -145,6 +155,7 @@ proc main =
       case normalize(key)
       of "help", "h": writeHelp()
       of "output", "o", "out": outfile = val
+      of "ssr": ssr = true
       of "indent": opt.indWidth = parseInt(val)
       of "maxlinelen": opt.maxLineLen = parseInt(val)
       else: writeHelp()
@@ -158,6 +169,6 @@ proc main =
 
   let parsed = loadHtml(infile)
   let result = render(parsed, 2*opt.indWidth, opt)
-  writeFile(outfile, karaxTmpl % result)
+  writeFile(outfile, if ssr: karaxSsrTmpl % result else: karaxTmpl % result)
 
 main()
