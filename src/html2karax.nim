@@ -92,11 +92,14 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
+      let isscript = n.tag == "script"
       let isTopLevel = n.tag == "document"
       if not isTopLevel:
         if indent > 0:
           result.addIndent(indent)
         result.add(toVNode(n.rawTag))
+        if n.rawTag == "br":
+          result.add("()")
         if n.attrs != nil:
           result.add('(')
           var comma = false
@@ -109,16 +112,26 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
             result.add(key)
             if isKeyw:
               result.add('`')
-            result.add(" = \"")
-            result.add(val)
+            result.add(" = ")
+            if key == "style":
+              result.add("@[")
+            result.add "\""
+            result.add val
             result.add('"')
+            if key == "style":
+              result.add "]"
           result.add(')')
       if n.len != 0:
         if not isTopLevel: result.add(':')
+        if isscript: 
+          result.add("text \"\"\"")
+          result.add n.innerText
+          result.add("text \"\"\"")
+          return
         for i in 0 ..< n.len:
           renderImpl(result, n[i], if isTopLevel: indent else: indent+opt.indWidth, opt)
     of xnText:
-      if not isEmptyOrWhitespace(n.text):
+      if not isEmptyOrWhitespace(n.text) :
         if indent > 0:
           result.addIndent(indent)
         result.add("text ")
