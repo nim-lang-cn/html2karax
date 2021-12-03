@@ -1,5 +1,4 @@
 import std / [algorithm, htmlparser, parseopt, strtabs, strutils, os, xmltree, wordwrap]
-from std / json import escapeJsonUnquoted
 
 const
   usage = """
@@ -10,6 +9,7 @@ Usage:
 Options:
   --out:file       set the output file (default: the same name as the input file, .nim extension)
   --help           show this help
+  --raw            do not attempt to format text
   --ssr            output code appropriate for server side HTML rendering
   --indent:N[=2]   set the number of spaces that is used for indentation
   --maxLineLen:N   set the desired maximum line length (default: 80)
@@ -55,6 +55,7 @@ proc render(): string =
 
 type
   Options = object
+    rawText: bool
     indWidth: Natural
     maxLineLen: Positive
 
@@ -85,21 +86,18 @@ proc toVNode(tag: sink string): string =
 
 proc addIndent(result: var string, indent: int) =
   result.add("\n")
-  for i in 1 .. indent:
+  for i in 1..indent:
     result.add(' ')
 
 proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
-      let isscript = n.tag == "script"
-      let isTopLevel = n.tag == "document"
-      if not isTopLevel:
+      let isDocRoot = n.tag == "document" # Hide document pseudo tag
+      if not isDocRoot:
         if indent > 0:
           result.addIndent(indent)
         result.add(toVNode(n.rawTag))
-        if n.rawTag == "br":
-          result.add("()")
         if n.attrs != nil:
           result.add('(')
           var comma = false
@@ -112,39 +110,47 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
             result.add(key)
             if isKeyw:
               result.add('`')
-            result.add(" = ")
-            if key == "style":
-              result.add("@[")
-            result.add "\""
-            result.add val
+            result.add(" = \"")
+            result.add(val)
             result.add('"')
             if key == "style":
-              result.add "]"
+              result.add(".toCss")
           result.add(')')
+        elif n.len == 0: # An empty element without attributes
+          result.add("()")
       if n.len != 0:
-        if not isTopLevel: result.add(':')
-        if isscript: 
-          result.add("text \"\"\"")
-          result.add n.innerText
-          result.add("text \"\"\"")
-          return
+        if not isDocRoot: result.add(':')
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], if isTopLevel: indent else: indent+opt.indWidth, opt)
+          renderImpl(result, n[i], if isDocRoot: indent else: indent+opt.indWidth, opt)
     of xnText:
-      if not isEmptyOrWhitespace(n.text) :
+      if not isEmptyOrWhitespace(n.text):
         if indent > 0:
           result.addIndent(indent)
         result.add("text ")
-        if indent + len("text \"\"") + len(n.text) <= opt.maxLineLen:
+        if (opt.rawText and countLines(n.text) == 1) or
+            indent + len("text \"\"") + len(n.text) <= opt.maxLineLen:
           result.add('"')
-          escapeJsonUnquoted(n.text, result)
+          result.add(n.text)
           result.add('"')
         else:
           result.add("\"\"\"\n")
-          let localIndent = indent+opt.indWidth
-          let wrapped = wrapWords(n.text, opt.maxLineLen-localIndent, false)
-          result.add(indent(wrapped, localIndent))
+          if opt.rawText:
+            result.add(n.text)
+          else:
+            let wrapped = wrapWords(n.text, opt.maxLineLen, false)
+            result.add(wrapped)
           result.add("\"\"\"")
+    of xnComment:
+      if not isEmptyOrWhitespace(n.text):
+        if countLines(n.text) == 1:
+          if indent > 0:
+            result.addIndent(indent)
+          result.add('#')
+          result.add(n.text)
+        else:
+          result.add("\n#[")
+          result.add(n.text)
+          result.add("]#")
     else: discard
 
 proc render(n: XmlNode, indent = 0, opt: Options): string =
@@ -169,6 +175,7 @@ proc main =
       of "help", "h": writeHelp()
       of "output", "o", "out": outfile = val
       of "ssr": ssr = true
+      of "raw", "r": opt.rawText = true
       of "indent": opt.indWidth = parseInt(val)
       of "maxlinelen": opt.maxLineLen = parseInt(val)
       else: writeHelp()
