@@ -7,12 +7,12 @@ html2karax - Convert static html to Karax DSL code.
 Usage:
   html2karax [options] htmlfile
 Options:
-  --out:file       set the output file (default: the same name as the input file, .nim extension)
-  --help           show this help
-  --raw            do not attempt to format text
-  --ssr            output code appropriate for server side HTML rendering
-  --indent:N[=2]   set the number of spaces that is used for indentation
-  --maxLineLen:N   set the desired maximum line length (default: 80)
+  --out:file      set the output file (default: the same name as the input file, .nim extension)
+  --help          show this help
+  --raw           do not attempt to format text
+  --ssr           output code appropriate for server side HTML rendering
+  --indent:N[=2]  set the number of spaces that is used for indentation
+  --maxLineLen:N  set the desired maximum line length (default: 80)
 """
 
   karaxTmpl = """
@@ -86,8 +86,20 @@ proc toVNode(tag: sink string): string =
 
 proc addIndent(result: var string, indent: int) =
   result.add("\n")
-  for i in 1 .. indent:
+  for i in 1..indent:
     result.add(' ')
+
+template renderText(text) =
+  let isSingleLine = countLines(text) == 1
+  if isSingleLine:
+    result.add('"')
+  else:
+    result.add("\"\"\"\n")
+  result.add(text)
+  if isSingleLine:
+    result.add('"')
+  else:
+    result.add("\"\"\"")
 
 proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
   if n != nil:
@@ -127,20 +139,11 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
         if indent > 0:
           result.addIndent(indent)
         result.add("text ")
-        let isSingleLine = indent + len("text \"\"") + len(n.text) <= opt.maxLineLen
-        if isSingleLine:
-          result.add('"')
-        else:
-          result.add("\"\"\"\n")
         if opt.rawText:
-          result.add(n.text)
+          renderText(n.text)
         else:
           let wrapped = wrapWords(n.text, opt.maxLineLen, false)
-          result.add(wrapped)
-        if isSingleLine:
-          result.add('"')
-        else:
-          result.add("\"\"\"")
+          renderText(wrapped)
     of xnComment:
       if not isEmptyOrWhitespace(n.text):
         if indent > 0:
