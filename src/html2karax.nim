@@ -86,7 +86,7 @@ proc toVNode(tag: sink string): string =
 
 proc addIndent(result: var string, indent: int) =
   result.add("\n")
-  for i in 1..indent:
+  for i in 1 .. indent:
     result.add(' ')
 
 proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
@@ -127,29 +127,32 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
         if indent > 0:
           result.addIndent(indent)
         result.add("text ")
-        if (opt.rawText and countLines(n.text) == 1) or
-            indent + len("text \"\"") + len(n.text) <= opt.maxLineLen:
-          result.add('"')
-          result.add(n.text)
+        let isSingleLine = indent + len("text \"\"") + len(n.text) <= opt.maxLineLen
+        if isSingleLine:
           result.add('"')
         else:
           result.add("\"\"\"\n")
-          if opt.rawText:
-            result.add(n.text)
-          else:
-            let wrapped = wrapWords(n.text, opt.maxLineLen, false)
-            result.add(wrapped)
+        if opt.rawText:
+          result.add(n.text)
+        else:
+          let wrapped = wrapWords(n.text, opt.maxLineLen, false)
+          result.add(wrapped)
+        if isSingleLine:
+          result.add('"')
+        else:
           result.add("\"\"\"")
     of xnComment:
       if not isEmptyOrWhitespace(n.text):
+        if indent > 0:
+          result.addIndent(indent)
         if countLines(n.text) == 1:
-          if indent > 0:
-            result.addIndent(indent)
           result.add('#')
           result.add(n.text)
         else:
-          result.add("\n#[")
-          result.add(n.text)
+          result.add("#[")
+          result.add(indent(n.text, indent))
+          if indent > 0:
+            result.addIndent(indent)
           result.add("]#")
     else: discard
 
