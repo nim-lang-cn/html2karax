@@ -1,6 +1,6 @@
 # Package
 
-version       = "1.1.0"
+version       = "1.1.1"
 author        = "nim-lang-cn"
 description   = "Converts html to karax."
 license       = "MIT"
