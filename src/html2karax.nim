@@ -55,7 +55,6 @@ proc render(): string =
 
 type
   Options = object
-    rawText: bool
     indWidth: Natural
     maxLineLen: Positive
 
@@ -89,7 +88,7 @@ proc addIndent(result: var string, indent: int) =
   for i in 1..indent:
     result.add(' ')
 
-template renderText(text) =
+template renderText(text: string) =
   let isSingleLine = countLines(text) == 1
   if isSingleLine:
     result.add('"')
@@ -101,10 +100,11 @@ template renderText(text) =
   else:
     result.add("\"\"\"")
 
-proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
+proc renderImpl(result: var string, n: XmlNode, b: var string, indent: int; rawText: bool; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
+      let rawText = rawText or n.tag in ["script", "pre"]
       let isDocRoot = n.tag == "document" # Hide document pseudo tag
       if not isDocRoot:
         if indent > 0:
@@ -132,18 +132,23 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
           result.add("()")
       if n.len != 0:
         if not isDocRoot: result.add(':')
+        let indent = if isDocRoot: indent else: indent+opt.indWidth
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], if isDocRoot: indent else: indent+opt.indWidth, opt)
+          renderImpl(result, n[i], b, indent, rawText, opt)
+          # Render grouped text nodes
+          if b.len > 0 and (i+1 >= n.len or n[i+1].kind != xnText):
+            if indent > 0:
+              result.addIndent(indent)
+            result.add("text ")
+            if rawText:
+              renderText(b)
+            else:
+              let wrapped = wrapWords(b, opt.maxLineLen, false)
+              renderText(wrapped)
+            b.setLen(0)
     of xnText:
       if not isEmptyOrWhitespace(n.text):
-        if indent > 0:
-          result.addIndent(indent)
-        result.add("text ")
-        if opt.rawText:
-          renderText(n.text)
-        else:
-          let wrapped = wrapWords(n.text, opt.maxLineLen, false)
-          renderText(wrapped)
+        b.add n.text
     of xnComment:
       if not isEmptyOrWhitespace(n.text):
         if indent > 0:
@@ -159,9 +164,10 @@ proc renderImpl(result: var string, n: XmlNode, indent: int; opt: Options) =
           result.add("]#")
     else: discard
 
-proc render(n: XmlNode, indent = 0, opt: Options): string =
+proc render(n: XmlNode, indent = 0, rawText: bool, opt: Options): string =
   result = ""
-  renderImpl(result, n, indent, opt)
+  var backlog = ""
+  renderImpl(result, n, backlog, indent, rawText, opt)
 
 proc writeHelp() =
   stdout.write(usage)
@@ -170,7 +176,7 @@ proc writeHelp() =
 
 proc main =
   var infile, outfile: string
-  var ssr: bool
+  var ssr, rawText = false
   var opt = Options(indWidth: 2, maxLineLen: 80)
   for kind, key, val in getopt():
     case kind
@@ -181,11 +187,11 @@ proc main =
       of "help", "h": writeHelp()
       of "output", "o", "out": outfile = val
       of "ssr": ssr = true
-      of "raw", "r": opt.rawText = true
+      of "raw", "r": rawText = true
       of "indent": opt.indWidth = parseInt(val)
       of "maxlinelen": opt.maxLineLen = parseInt(val)
       else: writeHelp()
-    of cmdEnd: assert(false) # cannot happen
+    of cmdEnd: assert false # cannot happen
 
   if infile.len == 0:
     quit "[Error] no input file."
@@ -194,7 +200,7 @@ proc main =
     outfile = infile.changeFileExt(".nim")
 
   let parsed = loadHtml(infile)
-  let result = render(parsed, 2*opt.indWidth, opt)
+  let result = render(parsed, 2*opt.indWidth, rawText, opt)
   writeFile(outfile, if ssr: karaxSsrTmpl % result else: karaxTmpl % result)
 
 main()
