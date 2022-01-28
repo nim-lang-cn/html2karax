@@ -1,11 +1,11 @@
 # Package
 
-version       = "1.0.1"
+version       = "1.0.2"
 author        = "nim-lang-cn"
 description   = "Converts html to karax."
 license       = "MIT"
 bin           = @["html2karax"]
-skipDirs      = @["public"]
+skipDirs      = @["public","tests"]
 
 # Dependencies
 

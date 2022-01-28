@@ -88,19 +88,43 @@ proc addIndent(result: var string, indent: int) =
   for i in 1..indent:
     result.add(' ')
 
+proc myRender(result: var string, b: string, isSingleLine: bool) =
+  let L = b.len
+  var i = 0
+  while i < L:
+    let ch = b[i]
+    if isSingleLine and ch == '\"':
+      result.add("\\\"")
+    elif ch == ' ':
+      let j = i
+      while i < L and b[i] == ' ': inc i
+      if i >= L: discard
+      elif b[i] == '\n':
+        result.add('\n')
+      else:
+        if j-1 < 0 or b[j-1] != '\n':
+          result.add(' ')
+        dec i
+    elif ch == '\n':
+      result.add('\n')
+    else:
+      result.add(ch)
+    inc(i)
+
 template renderText(text: string) =
   let isSingleLine = countLines(text) == 1
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"\n")
-  result.add(text)
+  myRender(result, text, isSingleLine)
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"")
 
-proc renderImpl(result: var string, n: XmlNode, b: var string, indent: int; rawText: bool; opt: Options) =
+proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int;
+    rawText: bool; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
@@ -134,31 +158,31 @@ proc renderImpl(result: var string, n: XmlNode, b: var string, indent: int; rawT
         if not isDocRoot: result.add(':')
         let indent = if isDocRoot: indent else: indent+opt.indWidth
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], b, indent, rawText, opt)
+          renderImpl(result, n[i], backlog, indent, rawText, opt)
           # Render grouped text nodes
-          if b.len > 0 and (i+1 >= n.len or n[i+1].kind != xnText):
+          if backlog.len > 0 and (i+1 >= n.len or n[i+1].kind != xnText):
             if indent > 0:
               result.addIndent(indent)
             result.add("text ")
             if rawText:
-              renderText(b)
+              renderText(backlog)
             else:
-              let wrapped = wrapWords(b, opt.maxLineLen, false)
+              let wrapped = wrapWords(backlog, opt.maxLineLen, splitLongWords = false)
               renderText(wrapped)
-            b.setLen(0)
+            backlog.setLen(0)
     of xnText:
-      if not isEmptyOrWhitespace(n.text):
-        b.add n.text
+      if rawText or not isEmptyOrWhitespace(n.text):
+        backlog.add n.text
     of xnComment:
       if not isEmptyOrWhitespace(n.text):
         if indent > 0:
           result.addIndent(indent)
         if countLines(n.text) == 1:
           result.add('#')
-          result.add(n.text)
+          myRender(result, n.text, true)
         else:
           result.add("#[")
-          result.add(indent(n.text, indent))
+          myRender(result, indent(n.text, indent), false)
           if indent > 0:
             result.addIndent(indent)
           result.add("]#")
