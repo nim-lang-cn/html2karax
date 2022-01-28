@@ -88,12 +88,12 @@ proc addIndent(result: var string, indent: int) =
   for i in 1..indent:
     result.add(' ')
 
-proc myRender(result: var string, b: string, isSingleLine: bool) =
+proc myRender(result: var string, b: string, escape, strip: bool) =
   let L = b.len
   var i = 0
   while i < L:
     let ch = b[i]
-    if isSingleLine and ch == '\"':
+    if escape and ch == '\"':
       result.add("\\\"")
     elif ch == ' ':
       let j = i
@@ -102,8 +102,10 @@ proc myRender(result: var string, b: string, isSingleLine: bool) =
       elif b[i] == '\n':
         result.add('\n')
       else:
-        if j-1 < 0 or b[j-1] != '\n':
-          result.add(' ')
+        if strip: result.add(' ')
+        else:
+          for ii in j..i-1:
+            result.add(' ')
         dec i
     elif ch == '\n':
       result.add('\n')
@@ -111,13 +113,13 @@ proc myRender(result: var string, b: string, isSingleLine: bool) =
       result.add(ch)
     inc(i)
 
-template renderText(text: string) =
+proc renderText(result: var string, text: string; strip: bool) =
   let isSingleLine = countLines(text) == 1
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"\n")
-  myRender(result, text, isSingleLine)
+  myRender(result, text, isSingleLine, strip)
   if isSingleLine:
     result.add('"')
   else:
@@ -147,6 +149,7 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
             if isKeyw:
               result.add('`')
             result.add(" = \"")
+            #myRender(result, val, true)
             result.add(val)
             result.add('"')
             if key == "style":
@@ -165,10 +168,10 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
               result.addIndent(indent)
             result.add("text ")
             if rawText:
-              renderText(backlog)
+              renderText(result, backlog, strip = false)
             else:
               let wrapped = wrapWords(backlog, opt.maxLineLen, splitLongWords = false)
-              renderText(wrapped)
+              renderText(result, wrapped, strip = true)
             backlog.setLen(0)
     of xnText:
       if rawText or not isEmptyOrWhitespace(n.text):
@@ -179,10 +182,10 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.addIndent(indent)
         if countLines(n.text) == 1:
           result.add('#')
-          myRender(result, n.text, true)
+          myRender(result, n.text, escape = true, strip = false)
         else:
           result.add("#[")
-          myRender(result, indent(n.text, indent), false)
+          myRender(result, indent(n.text, indent), escape = false, strip = false)
           if indent > 0:
             result.addIndent(indent)
           result.add("]#")
