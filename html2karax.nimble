@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "1.0.0"
 author        = "nim-lang-cn"
 description   = "Converts html to karax."
 license       = "MIT"
@@ -10,4 +10,4 @@ bin           = @["html2karax"]
 
 # Dependencies
 
-requires "nim >= 1.4.0"
+requires "nim >= 1.6.0"
