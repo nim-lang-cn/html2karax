@@ -168,9 +168,8 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
         let indent = if isDocRoot: indent else: indent+opt.indWidth
         for i in 0 ..< n.len:
           renderImpl(result, n[i], backlog, indent, isVerbatim, opt)
-          # Render grouped text nodes, if at the end or next is not a text node.
-          if i+1 >= n.len or n[i+1].kind != xnText:
-            if not isEmptyOrWhitespace(backlog) and (i+1 >= n.len or n[i+1].kind != xnText):
+          if i+1 >= n.len or n[i+1].kind != xnText: # Invalidate the backlog
+            if not isEmptyOrWhitespace(backlog): # Render grouped text nodes.
               if indent > 0:
                 result.addIndent(indent)
               result.add("text ")
@@ -180,7 +179,6 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
               else:
                 let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
                 renderText(result, wrapped, true)
-            # Prevent outputting empty text
             backlog.setLen(0)
     of xnText:
       backlog.add n.text
