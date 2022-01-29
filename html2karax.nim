@@ -91,13 +91,14 @@ proc addIndent(result: var string, indent: int) =
   for i in 1..indent:
     result.add(' ')
 
-proc myRender(result: var string, b: string, escape, strip: bool) =
-  # Escapes '"' when appropriate and also omits in-between multiple spaces
+proc myRender(result: var string, b: string, escapeQuotes, stripSpaces: bool) =
+  # Primarily used to remove spaces at line end. Also escapes '"' and
+  # omits in-between multiple spaces when appropriate.
   let L = b.len
   var i = 0
   while i < L:
     let ch = b[i]
-    if escape and ch == '\"':
+    if escapeQuotes and ch == '\"':
       result.add("\\\"")
     elif ch == ' ':
       let j = i
@@ -106,7 +107,7 @@ proc myRender(result: var string, b: string, escape, strip: bool) =
       elif b[i] == '\n':
         result.add('\n')
       else:
-        if strip: result.add(' ')
+        if stripSpaces: result.add(' ')
         else:
           for ii in j..i-1:
             result.add(' ')
@@ -117,25 +118,25 @@ proc myRender(result: var string, b: string, escape, strip: bool) =
       result.add(ch)
     inc(i)
 
-proc renderText(result: var string, text: string; strip: bool) =
+proc renderText(result: var string, text: string; wsInsignif: bool) =
   let isSingleLine = countLines(text) == 1
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"")
-    if strip: result.add('\n') # Verbatim multiline text that starts with a \n
-  myRender(result, text, isSingleLine, strip)
+    if wsInsignif: result.add('\n') # verbatim multiline text that starts with a \n
+  myRender(result, text, isSingleLine, wsInsignif)
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"")
 
 proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int;
-    verbatim: bool; opt: Options) =
+    isVerbatim: bool; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
-      let verbatim = verbatim or n.tag in ["script", "pre"]
+      let isVerbatim = isVerbatim or n.tag in ["script", "pre"]
       let isDocRoot = n.tag == "document" # Hide document pseudo-tag
       if not isDocRoot:
         if indent > 0:
@@ -166,21 +167,21 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
         if not isDocRoot: result.add(':')
         let indent = if isDocRoot: indent else: indent+opt.indWidth
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], backlog, indent, verbatim, opt)
+          renderImpl(result, n[i], backlog, indent, isVerbatim, opt)
           # Render grouped text nodes, if at the end or next is not a text node.
           if backlog.len > 0 and (i+1 >= n.len or n[i+1].kind != xnText):
             if indent > 0:
               result.addIndent(indent)
             result.add("text ")
             let tmp = backlog.dedent
-            if verbatim:
+            if isVerbatim:
               renderText(result, tmp, strip = false)
             else:
               let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
               renderText(result, wrapped, strip = true)
             backlog.setLen(0)
     of xnText:
-      if verbatim or not isEmptyOrWhitespace(n.text): # Prevent outputting empty text
+      if isVerbatim or not isEmptyOrWhitespace(n.text): # Prevent outputting empty text
         backlog.add n.text
     of xnComment:
       if not isEmptyOrWhitespace(n.text):
@@ -193,16 +194,16 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.add("#[")
           # Unindent text before indenting it again!
           myRender(result, indent(n.text.dedent, indent), escape = false, strip = false)
-          stripLineEnd(result)
+          stripLineEnd(result) # comment end tag in the next line
           if indent > 0:
             result.addIndent(indent)
           result.add("]#")
     else: discard
 
-proc render(n: XmlNode, indent = 0, verbatim: bool, opt: Options): string =
+proc render(n: XmlNode, indent = 0, isVerbatim: bool, opt: Options): string =
   result = ""
   var backlog = ""
-  renderImpl(result, n, backlog, indent, verbatim, opt)
+  renderImpl(result, n, backlog, indent, isVerbatim, opt)
 
 proc writeHelp() =
   stdout.write(usage)
