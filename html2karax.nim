@@ -53,14 +53,15 @@ proc render(): string =
     "yield"]
 
 proc isKeyword*(s: string): bool {.inline.} =
-  binarySearch(nimKeyw, s) >= 0
+  binarySearch(nimKeyw, s) >= 0 # assumes sorted
 
 type
-  Options = object
+  Options = object # from command-line
     indWidth: Natural
     maxLineLen: Positive
 
 proc toVNode(tag: sink string): string =
+  # Translates to karax VNode tags, most remain the same.
   case tag
   of "div":
     result = "tdiv"
@@ -91,6 +92,7 @@ proc addIndent(result: var string, indent: int) =
     result.add(' ')
 
 proc myRender(result: var string, b: string, escape, strip: bool) =
+  # Escapes '"' when appropriate and also omits in-between multiple spaces
   let L = b.len
   var i = 0
   while i < L:
