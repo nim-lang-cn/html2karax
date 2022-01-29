@@ -118,14 +118,14 @@ proc myRender(result: var string, b: string, escapeQuotes, stripSpaces: bool) =
       result.add(ch)
     inc(i)
 
-proc renderText(result: var string, text: string; spaceInsignificant: bool) =
+proc renderText(result: var string, text: string; spaceInsensitive: bool) =
   let isSingleLine = countLines(text) == 1
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"")
-    if spaceInsignificant: result.add('\n') # verbatim multiline text that starts with a \n
-  myRender(result, text, isSingleLine, spaceInsignificant)
+    if spaceInsensitive: result.add('\n') # verbatim multiline text that starts with a '\n'
+  myRender(result, text, isSingleLine, spaceInsensitive)
   if isSingleLine:
     result.add('"')
   else:
@@ -169,20 +169,21 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
         for i in 0 ..< n.len:
           renderImpl(result, n[i], backlog, indent, isVerbatim, opt)
           # Render grouped text nodes, if at the end or next is not a text node.
-          if backlog.len > 0 and (i+1 >= n.len or n[i+1].kind != xnText):
-            if indent > 0:
-              result.addIndent(indent)
-            result.add("text ")
-            let tmp = backlog.dedent
-            if isVerbatim:
-              renderText(result, tmp, spaceInsignificant = false)
-            else:
-              let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
-              renderText(result, wrapped, true)
+          if i+1 >= n.len or n[i+1].kind != xnText:
+            if not isEmptyOrWhitespace(backlog) and (i+1 >= n.len or n[i+1].kind != xnText):
+              if indent > 0:
+                result.addIndent(indent)
+              result.add("text ")
+              let tmp = backlog.dedent
+              if isVerbatim:
+                renderText(result, tmp, spaceInsensitive = false)
+              else:
+                let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
+                renderText(result, wrapped, true)
+            # Prevent outputting empty text
             backlog.setLen(0)
     of xnText:
-      if isVerbatim or not isEmptyOrWhitespace(n.text): # Prevent outputting empty text
-        backlog.add n.text
+      backlog.add n.text
     of xnComment:
       if not isEmptyOrWhitespace(n.text):
         if indent > 0: # All comments are indented

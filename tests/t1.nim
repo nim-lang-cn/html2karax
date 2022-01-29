@@ -64,7 +64,7 @@ of months."""
       text "This liquid is"
       strong:
         text "highly toxic"
-      text "— if you drink it,"
+      text " — if you drink it,"
       strong:
         text "you may"
         em:
@@ -72,13 +72,13 @@ of months."""
       text "."
     # scientific names
     p:
-      text "The Ruby-throated Hummingbird ("
+      text " The Ruby-throated Hummingbird ("
       italic:
         text "Archilochus colubris"
       text ") is the most common hummingbird in Eastern North America."
     # foreign words
     p:
-      text "The menu was a sea of exotic words like"
+      text " The menu was a sea of exotic words like"
       italic(lang = "uk-latn"):
         text "vatrushka"
       text ","
@@ -90,7 +90,7 @@ of months."""
       text "."
     # a known misspelling
     p:
-      text "Someday I'll learn how to"
+      text " Someday I'll learn how to"
       underlined(style = "text-decoration-line: underline; text-decoration-style: wavy;".toCss):
         text "spel"
       text "better."
