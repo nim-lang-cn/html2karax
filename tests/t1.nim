@@ -110,13 +110,11 @@ of months."""
     # Static
     script:
       text """
-
 const userInfo = JSON.parse(document.getElementById("data").text);
 console.log("User information: %o", userInfo);
 """
     script:
       text """
-
 const a = 3;
 const b = -2;
 
@@ -127,10 +125,22 @@ console.log(a > 0 && b > 0);
 // expected output: false
 """
     script(src = "javascript.js")
+    body:
+      #[
+      This is a multiline comment and it can
+      span through as many as lines you like.
+      ]#
+      p:
+        text "Document content goes here....."
+      #[      I
+       am
+       a
+       multiline
+       comment
+      ]#
     #[
-     <p>Look at this cool image:</p>
-     <img border="0" src="pic_trulli.jpg" alt="Trulli">
-
+    <p>Look at this cool image:</p>
+    <img border="0" src="pic_trulli.jpg" alt="Trulli">
     ]#
     p:
       text "This"

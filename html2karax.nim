@@ -121,7 +121,8 @@ proc renderText(result: var string, text: string; strip: bool) =
   if isSingleLine:
     result.add('"')
   else:
-    result.add("\"\"\"\n")
+    result.add("\"\"\"")
+    if strip: result.add('\n')
   myRender(result, text, isSingleLine, strip)
   if isSingleLine:
     result.add('"')
@@ -189,7 +190,8 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           myRender(result, n.text, escape = true, strip = false)
         else:
           result.add("#[")
-          myRender(result, indent(n.text, indent), escape = false, strip = false)
+          myRender(result, indent(n.text.dedent, indent), escape = false, strip = false)
+          stripLineEnd(result)
           if indent > 0:
             result.addIndent(indent)
           result.add("]#")
