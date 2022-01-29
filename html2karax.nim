@@ -121,7 +121,7 @@ proc renderText(result: var string, text: string; strip: bool) =
     result.add('"')
   else:
     result.add("\"\"\"")
-    if strip: result.add('\n')
+    if strip: result.add('\n') # Verbatim multiline text that starts with a \n
   myRender(result, text, isSingleLine, strip)
   if isSingleLine:
     result.add('"')
@@ -129,12 +129,12 @@ proc renderText(result: var string, text: string; strip: bool) =
     result.add("\"\"\"")
 
 proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int;
-    rawText: bool; opt: Options) =
+    verbatim: bool; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
-      let rawText = rawText or n.tag in ["script", "pre"]
-      let isDocRoot = n.tag == "document" # Hide document pseudo tag
+      let verbatim = verbatim or n.tag in ["script", "pre"]
+      let isDocRoot = n.tag == "document" # Hide document pseudo-tag
       if not isDocRoot:
         if indent > 0:
           result.addIndent(indent)
@@ -164,31 +164,32 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
         if not isDocRoot: result.add(':')
         let indent = if isDocRoot: indent else: indent+opt.indWidth
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], backlog, indent, rawText, opt)
-          # Render grouped text nodes
+          renderImpl(result, n[i], backlog, indent, verbatim, opt)
+          # Render grouped text nodes, if at the end or next is not a text node.
           if backlog.len > 0 and (i+1 >= n.len or n[i+1].kind != xnText):
             if indent > 0:
               result.addIndent(indent)
             result.add("text ")
             let tmp = backlog.dedent
-            if rawText:
+            if verbatim:
               renderText(result, tmp, strip = false)
             else:
               let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
               renderText(result, wrapped, strip = true)
             backlog.setLen(0)
     of xnText:
-      if rawText or not isEmptyOrWhitespace(n.text):
+      if verbatim or not isEmptyOrWhitespace(n.text): # Prevent outputting empty text
         backlog.add n.text
     of xnComment:
       if not isEmptyOrWhitespace(n.text):
-        if indent > 0:
+        if indent > 0: # All comments are indented
           result.addIndent(indent)
         if countLines(n.text) == 1:
           result.add('#')
           myRender(result, n.text, escape = true, strip = false)
         else:
           result.add("#[")
+          # Unindent text before indenting it again!
           myRender(result, indent(n.text.dedent, indent), escape = false, strip = false)
           stripLineEnd(result)
           if indent > 0:
@@ -196,10 +197,10 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.add("]#")
     else: discard
 
-proc render(n: XmlNode, indent = 0, rawText: bool, opt: Options): string =
+proc render(n: XmlNode, indent = 0, verbatim: bool, opt: Options): string =
   result = ""
   var backlog = ""
-  renderImpl(result, n, backlog, indent, rawText, opt)
+  renderImpl(result, n, backlog, indent, verbatim, opt)
 
 proc writeHelp() =
   stdout.write(usage)
@@ -231,7 +232,7 @@ proc main =
     outfile = infile.changeFileExt(".nim")
 
   let parsed = loadHtml(infile)
-  let result = render(parsed, 2*opt.indWidth, false, opt)
+  let result = render(parsed, 2*opt.indWidth, false, opt) # Templates start with the same indentation
   writeFile(outfile, if ssr: karaxSsrTmpl % result else: karaxTmpl % result)
 
 main()
