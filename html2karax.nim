@@ -53,6 +53,9 @@ proc render(): string =
     "xor",
     "yield"]
 
+proc isKeyword*(s: string): bool {.inline.} =
+  binarySearch(nimKeyw, s) >= 0
+
 type
   Options = object
     indWidth: Natural
@@ -142,7 +145,7 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           for key, val in pairs(n.attrs):
             if comma: result.add(", ")
             else: comma = true
-            let isKeyw = binarySearch(nimKeyw, key) >= 0
+            let isKeyw = isKeyword(key)
             if isKeyw:
               result.add('`')
             result.add(key)
@@ -167,10 +170,11 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
             if indent > 0:
               result.addIndent(indent)
             result.add("text ")
+            let tmp = backlog.dedent
             if rawText:
-              renderText(result, backlog, strip = false)
+              renderText(result, tmp, strip = false)
             else:
-              let wrapped = wrapWords(backlog, opt.maxLineLen, splitLongWords = false)
+              let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
               renderText(result, wrapped, strip = true)
             backlog.setLen(0)
     of xnText:
