@@ -118,14 +118,14 @@ proc myRender(result: var string, b: string, escapeQuotes, stripSpaces: bool) =
       result.add(ch)
     inc(i)
 
-proc renderText(result: var string, text: string; wsInsignif: bool) =
+proc renderText(result: var string, text: string; spaceInsignificant: bool) =
   let isSingleLine = countLines(text) == 1
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"")
-    if wsInsignif: result.add('\n') # verbatim multiline text that starts with a \n
-  myRender(result, text, isSingleLine, wsInsignif)
+    if spaceInsignificant: result.add('\n') # verbatim multiline text that starts with a \n
+  myRender(result, text, isSingleLine, spaceInsignificant)
   if isSingleLine:
     result.add('"')
   else:
@@ -175,10 +175,10 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
             result.add("text ")
             let tmp = backlog.dedent
             if isVerbatim:
-              renderText(result, tmp, strip = false)
+              renderText(result, tmp, spaceInsignificant = false)
             else:
               let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
-              renderText(result, wrapped, strip = true)
+              renderText(result, wrapped, true)
             backlog.setLen(0)
     of xnText:
       if isVerbatim or not isEmptyOrWhitespace(n.text): # Prevent outputting empty text
@@ -189,11 +189,11 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.addIndent(indent)
         if countLines(n.text) == 1:
           result.add('#')
-          myRender(result, n.text, escape = true, strip = false)
+          myRender(result, n.text, escapeQuotes = true, stripSpaces = false)
         else:
           result.add("#[")
           # Unindent text before indenting it again!
-          myRender(result, indent(n.text.dedent, indent), escape = false, strip = false)
+          myRender(result, indent(n.text.dedent, indent), false, false)
           stripLineEnd(result) # comment end tag in the next line
           if indent > 0:
             result.addIndent(indent)
