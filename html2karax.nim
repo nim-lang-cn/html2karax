@@ -9,7 +9,6 @@ Usage:
 Options:
   --out:file      set the output file (default: the same name as the input file, .nim extension)
   --help          show this help
-  --raw           do not attempt to format text
   --ssr           output code appropriate for server side HTML rendering
   --indent:N[=2]  set the number of spaces that is used for indentation
   --maxLineLen:N  set the desired maximum line length (default: 80)
@@ -209,7 +208,7 @@ proc writeHelp() =
 
 proc main =
   var infile, outfile: string
-  var ssr, rawText = false
+  var ssr = false
   var opt = Options(indWidth: 2, maxLineLen: 80)
   for kind, key, val in getopt():
     case kind
@@ -220,7 +219,6 @@ proc main =
       of "help", "h": writeHelp()
       of "output", "o", "out": outfile = val
       of "ssr": ssr = true
-      of "raw", "r": rawText = true
       of "indent": opt.indWidth = parseInt(val)
       of "maxlinelen": opt.maxLineLen = parseInt(val)
       else: writeHelp()
@@ -233,7 +231,7 @@ proc main =
     outfile = infile.changeFileExt(".nim")
 
   let parsed = loadHtml(infile)
-  let result = render(parsed, 2*opt.indWidth, rawText, opt)
+  let result = render(parsed, 2*opt.indWidth, false, opt)
   writeFile(outfile, if ssr: karaxSsrTmpl % result else: karaxTmpl % result)
 
 main()
