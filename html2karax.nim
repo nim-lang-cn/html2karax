@@ -134,8 +134,24 @@ proc renderText(result: var string, text: string;
   else:
     result.add("\"\"\"")
 
+proc renderBacklog(result: var string, text: string, indent: int, tags: set[HtmlTag];
+    last: bool; opt: Options) =
+  if indent > 0:
+    result.addIndent(indent)
+  result.add("text ")
+  let tmp = if tagPre notin tags: text.dedent else: text
+  if tags * {tagScript, tagPre} != {}:
+    renderText(result, tmp, spaceInsensitive = false, false, false)
+  else:
+    let tmp = tmp.strip(trailing = false, chars = Newlines) # fix leading \n replaced by ' '
+    var wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
+    let leadingSpace = text.startsWith(' ') and not tmp.startsWith(' ')
+    # Use that a block element can't be nested inside inline element
+    let trailingSpace = tmp.endsWith(' ') and (tags * InlineTags != {} or last)
+    renderText(result, wrapped, true, leadingSpace, trailingSpace) # readd surrounding spaces
+
 proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int;
-    tags: var set[HtmlTag]; opt: Options) =
+    tags: set[HtmlTag]; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
@@ -168,26 +184,14 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.add("()")
       if n.len != 0:
         if not isDocRoot: result.add(':')
-        tags.incl tag
         let indent = if isDocRoot: indent else: indent+opt.indWidth
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], backlog, indent, tags, opt)
+          renderImpl(result, n[i], backlog, indent, tags + {tag}, opt)
           if i+1 >= n.len or n[i+1].kind != xnText: # Invalidate the backlog
-            if not isEmptyOrWhitespace(backlog): # Render grouped text nodes, without outputting empty text.
-              if indent > 0:
-                result.addIndent(indent)
-              result.add("text ")
-              let tmp = if tagPre notin tags: backlog.dedent else: backlog
-              if tags * {tagScript, tagPre} != {}:
-                renderText(result, tmp, spaceInsensitive = false, false, false)
-              else:
-                let tmp = tmp.strip(trailing = false, chars = Newlines) # fix leading \n replaced by ' '
-                var wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
-                let leadingSpace = backlog.startsWith(' ') and not tmp.startsWith(' ')
-                let trailingSpace = tmp.endsWith(' ') and (tags * InlineTags != {} or i+1 < n.len)
-                renderText(result, wrapped, true, leadingSpace, trailingSpace) # re-add surrounding spaces
+            # Render grouped text nodes, without outputting empty text.
+            if not isEmptyOrWhitespace(backlog):
+              renderBacklog(result, backlog, indent, tags + {tag}, i+1 < n.len, opt)
             backlog.setLen(0)
-        tags.excl tag
     of xnText:
       backlog.add n.text
     of xnComment:
@@ -196,7 +200,7 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.addIndent(indent)
         if countLines(n.text) == 1:
           result.add('#')
-          myRender(result, n.text, escapeQuotes = true, stripSpaces = false)
+          myRender(result, n.text, escapeQuotes = false, stripSpaces = false)
         else:
           result.add("#[")
           # Unindent text before indenting it again!
@@ -210,8 +214,7 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
 proc render(n: XmlNode, indent = 0, opt: Options): string =
   result = ""
   var backlog = ""
-  var tags: set[HtmlTag] = {}
-  renderImpl(result, n, backlog, indent, tags, opt)
+  renderImpl(result, n, backlog, indent, {}, opt)
 
 proc writeHelp() =
   stdout.write(usage)
