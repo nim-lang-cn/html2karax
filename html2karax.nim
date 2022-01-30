@@ -60,31 +60,31 @@ type
     indWidth: Natural
     maxLineLen: Positive
 
-proc toVNode(tag: sink string): string =
+proc addVNode(result: var string; tag: string) =
   # Translates to karax VNode tags, most remain the same.
   case tag
   of "div":
-    result = "tdiv"
+    result.add "tdiv"
   of "s":
-    result = "strikethrough"
+    result.add "strikethrough"
   of "var":
-    result = "`var`"
+    result.add "`var`"
   of "i":
-    result = "italic"
+    result.add "italic"
   of "b":
-    result = "bold"
+    result.add "bold"
   of "u":
-    result = "underlined"
+    result.add "underlined"
   of "object":
-    result = "`object`"
+    result.add "`object`"
   of "discard":
-    result = "`discard`"
+    result.add "`discard`"
   of "set":
-    result = "`set`"
+    result.add "`set`"
   of "text":
-    result = "stext"
+    result.add "stext"
   else:
-    result = tag
+    result.add tag
 
 proc addIndent(result: var string, indent: int) =
   result.add("\n")
@@ -144,7 +144,7 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
       if not isDocRoot:
         if indent > 0:
           result.addIndent(indent)
-        result.add(toVNode(n.rawTag))
+        result.addVNode(n.tag)
         if n.attrs != nil:
           result.add('(')
           var comma = false
@@ -181,9 +181,9 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
               if tags * {tagScript, tagPre} != {}:
                 renderText(result, tmp, spaceInsensitive = false, false, false)
               else:
-                let leadingSpace = backlog.startsWith(' ') and not tmp.startsWith(' ')
                 let tmp = tmp.strip(trailing = false, chars = Newlines) # fix leading \n replaced by ' '
                 var wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
+                let leadingSpace = backlog.startsWith(' ') and not tmp.startsWith(' ')
                 let trailingSpace = tmp.endsWith(' ') and (tags * InlineTags != {} or i+1 < n.len)
                 renderText(result, wrapped, true, leadingSpace, trailingSpace) # re-add surrounding spaces
             backlog.setLen(0)
