@@ -132,12 +132,12 @@ proc renderText(result: var string, text: string; spaceInsensitive: bool) =
     result.add("\"\"\"")
 
 proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int;
-    isVerbatim: bool; opt: Options) =
+    tags: var set[HtmlTag]; opt: Options) =
   if n != nil:
     case n.kind
     of xnElement:
-      let isVerbatim = isVerbatim or n.tag in ["script", "pre"]
-      let isDocRoot = n.tag == "document" # Hide document pseudo-tag
+      let tag = htmlTag(n)
+      let isDocRoot = tag == tagUnknown and n.tag == "document" # Hide document pseudo-tag
       if not isDocRoot:
         if indent > 0:
           result.addIndent(indent)
@@ -165,21 +165,23 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.add("()")
       if n.len != 0:
         if not isDocRoot: result.add(':')
+        tags.incl tag
         let indent = if isDocRoot: indent else: indent+opt.indWidth
         for i in 0 ..< n.len:
-          renderImpl(result, n[i], backlog, indent, isVerbatim, opt)
+          renderImpl(result, n[i], backlog, indent, tags, opt)
           if i+1 >= n.len or n[i+1].kind != xnText: # Invalidate the backlog
-            if not isEmptyOrWhitespace(backlog): # Render grouped text nodes.
+            if not isEmptyOrWhitespace(backlog): # Render grouped text nodes, without outputting empty text.
               if indent > 0:
                 result.addIndent(indent)
               result.add("text ")
-              let tmp = backlog.dedent
-              if isVerbatim:
+              let tmp = if tagPre notin tags: backlog.dedent else: backlog
+              if tags * {tagScript, tagPre} != {}:
                 renderText(result, tmp, spaceInsensitive = false)
               else:
                 let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
                 renderText(result, wrapped, true)
             backlog.setLen(0)
+        tags.excl tag
     of xnText:
       backlog.add n.text
     of xnComment:
@@ -199,10 +201,11 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           result.add("]#")
     else: discard
 
-proc render(n: XmlNode, indent = 0, isVerbatim: bool, opt: Options): string =
+proc render(n: XmlNode, indent = 0, opt: Options): string =
   result = ""
   var backlog = ""
-  renderImpl(result, n, backlog, indent, isVerbatim, opt)
+  var tags: set[HtmlTag] = {}
+  renderImpl(result, n, backlog, indent, tags, opt)
 
 proc writeHelp() =
   stdout.write(usage)
@@ -234,7 +237,7 @@ proc main =
     outfile = infile.changeFileExt(".nim")
 
   let parsed = loadHtml(infile)
-  let result = render(parsed, 2*opt.indWidth, false, opt) # Templates start with the same indentation
+  let result = render(parsed, 2*opt.indWidth, opt) # Templates start with the same indentation
   writeFile(outfile, if ssr: karaxSsrTmpl % result else: karaxTmpl % result)
 
 main()

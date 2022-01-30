@@ -146,5 +146,56 @@ console.log(a > 0 && b > 0);
       text "This"
       # great text
       text "is a paragraph."
+    figure(role = "img", aria-labelledby = "cow-caption"):
+      pre:
+        text """
+      ___________________________
+  < I'm an expert in my field. >
+      ---------------------------
+          \   ^__^
+           \  (oo)\_______
+              (__)\       )\/\
+                  ||----w |
+                  ||     ||
+"""
+      figcaption(id = "cow-caption"):
+        text """
+ A cow saying, "I'm an expert in my field." The cow is illustrated using
+preformatted text characters."""
+    pre:
+      text """
+  L          TE
+    A       A
+      C    V
+       R A
+       DOU
+       LOU
+      REUSE
+      QUE TU
+      PORTES
+    ET QUI T'
+    ORNE O CI
+     VILISÉ
+    OTE-  TU VEUX
+     LA    BIEN
+    SI      RESPI
+            RER       - Apollinaire
+"""
+    p:
+      text "O’er all the hilltops"
+      br()
+      text " Is quiet now,"
+      br()
+      text " In all the treetops"
+      br()
+      text " Hearest thou"
+      br()
+      text " Hardly a breath;"
+      br()
+      text " The birds are asleep in the trees:"
+      br()
+      text " Wait, soon like these"
+      br()
+      text " Thou too shalt rest."
 
 setRenderer createDom
