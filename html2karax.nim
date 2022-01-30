@@ -118,14 +118,17 @@ proc myRender(result: var string, b: string, escapeQuotes, stripSpaces: bool) =
       result.add(ch)
     inc(i)
 
-proc renderText(result: var string, text: string; spaceInsensitive: bool) =
+proc renderText(result: var string, text: string;
+    spaceInsensitive, leadingSpace, trailingSpace: bool) =
   let isSingleLine = countLines(text) == 1
   if isSingleLine:
     result.add('"')
   else:
     result.add("\"\"\"")
     if spaceInsensitive: result.add('\n') # verbatim multiline text that starts with a '\n'
+  if leadingSpace: result.add(' ')
   myRender(result, text, isSingleLine, spaceInsensitive)
+  if trailingSpace: result.add(' ')
   if isSingleLine:
     result.add('"')
   else:
@@ -176,10 +179,13 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
               result.add("text ")
               let tmp = if tagPre notin tags: backlog.dedent else: backlog
               if tags * {tagScript, tagPre} != {}:
-                renderText(result, tmp, spaceInsensitive = false)
+                renderText(result, tmp, spaceInsensitive = false, false, false)
               else:
-                let wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
-                renderText(result, wrapped, true)
+                let leadingSpace = backlog.startsWith(' ') and not tmp.startsWith(' ')
+                let tmp = tmp.strip(trailing = false, chars = Newlines) # fix leading \n replaced by ' '
+                var wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
+                let trailingSpace = tmp.endsWith(' ') and (tags * InlineTags != {} or i+1 < n.len)
+                renderText(result, wrapped, true, leadingSpace, trailingSpace) # re-add surrounding spaces
             backlog.setLen(0)
         tags.excl tag
     of xnText:
