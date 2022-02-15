@@ -31,7 +31,7 @@ proc render(): string =
   result = $$vnode
 """
 
-  nimKeyw = ["addr", "and", "as", "asm",
+  nimKeywords = ["addr", "and", "as", "asm",
     "bind", "block", "break",
     "case", "cast", "concept", "const", "continue", "converter",
     "defer", "discard", "distinct", "div", "do",
@@ -53,7 +53,7 @@ proc render(): string =
     "yield"]
 
 proc isKeyword*(s: string): bool {.inline.} =
-  binarySearch(nimKeyw, s) >= 0 # assumes sorted
+  binarySearch(nimKeywords, s) >= 0 # assumes sorted
 
 type
   Options = object # from command-line
@@ -139,14 +139,14 @@ proc renderBacklog(result: var string, text: string, indent: int, tags: set[Html
   if indent > 0:
     result.addIndent(indent)
   result.add("text ")
-  let tmp = if tagPre notin tags: text.dedent else: text
+  var tmp = if tagPre notin tags: text.dedent else: text
   if tags * {tagScript, tagPre} != {}:
     renderText(result, tmp, spaceInsensitive = false, false, false)
   else:
-    let tmp = tmp.strip(trailing = false, chars = Newlines) # fix leading \n replaced by ' '
+    removePrefix(tmp, chars = Newlines) # fix leading \n replaced by ' '
     var wrapped = wrapWords(tmp, opt.maxLineLen, splitLongWords = false)
     let leadingSpace = text.startsWith(' ') and not tmp.startsWith(' ')
-    # Use that a block element can't be nested inside inline element
+    # Use that a block element can't be nested inside an inline element
     let trailingSpace = tmp.endsWith(' ') and (tags * InlineTags != {} or last)
     renderText(result, wrapped, true, leadingSpace, trailingSpace) # readd surrounding spaces
 
@@ -167,11 +167,11 @@ proc renderImpl(result: var string, n: XmlNode, backlog: var string, indent: int
           for key, val in pairs(n.attrs):
             if comma: result.add(", ")
             else: comma = true
-            let isKeyw = isKeyword(key)
-            if isKeyw:
+            let isKeyword = isKeyword(key)
+            if isKeyword:
               result.add('`')
             result.add(key)
-            if isKeyw:
+            if isKeyword:
               result.add('`')
             result.add(" = \"")
             #myRender(result, val, true)
