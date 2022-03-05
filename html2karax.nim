@@ -16,6 +16,7 @@ Options:
 
   karaxTmpl = """
 include karax / prelude
+import karax / [vstyles]
 
 proc createDom(): VNode =
   result = buildHtml:$1
@@ -24,7 +25,7 @@ setRenderer createDom
 """
 
   karaxSsrTmpl = """
-import karax / [karaxdsl, vdom]
+import karax / [karaxdsl, vdom, vstyles]
 
 proc render(): string =
   let vnode = buildHtml:$1
